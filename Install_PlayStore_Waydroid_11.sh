@@ -117,8 +117,8 @@ sudo cp -aR $TMP_DIR $MOUNT_DIR
 #REMOVE OLD, view perms later
 ####################
 
-#sudo rm -rf  $MOUNT_DIR/system/priv-app/GooglePackageInstaller
-sudo rm -rf  $MOUNT_DIR/system/priv-app/PackageInstaller
+sudo rm -rf  $MOUNT_DIR/system/priv-app/GooglePackageInstaller
+#sudo rm -rf  $MOUNT_DIR/system/priv-app/PackageInstaller
 
 ############################################
 
