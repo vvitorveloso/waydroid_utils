@@ -127,7 +127,7 @@ sudo cp -a 60-ih8sn.sh $MOUNT_DIR/system/addon.d/
 sudo cp -a ih8sn $MOUNT_DIR/system/bin/
 sudo cp -a ih8sn.conf  $MOUNT_DIR/system/etc/
 sudo cp -a ih8sn.rc $MOUNT_DIR/system/etc/init/
-
+echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
 
 ############
 
@@ -140,6 +140,6 @@ sudo umount $MOUNT_DIR
 
 sudo systemctl start waydroid-container
 
-
+git clone https://github.com/casualsnek/waydroid_script
 echo now run "$"sudo waydroid_script/waydroid_extras.py -i
 
