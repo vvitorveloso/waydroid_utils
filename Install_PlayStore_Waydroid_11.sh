@@ -123,18 +123,22 @@ sudo rm -rf  $MOUNT_DIR/system/priv-app/GooglePackageInstaller
 ############################################
 
 
-sudo cp -a 60-ih8sn.sh $MOUNT_DIR/system/addon.d/
-sudo cp -a ih8sn $MOUNT_DIR/system/bin/
-sudo cp -a ih8sn.conf  $MOUNT_DIR/system/etc/
-sudo cp -a ih8sn.rc $MOUNT_DIR/system/etc/init/
+sudo rm -rf $MOUNT_DIR/system/bin/ih8sn
+sudo cp -a ./ih8sn/60-ih8sn.sh $MOUNT_DIR/system/addon.d/
+sudo cp -a ./ih8sn/ih8sn $MOUNT_DIR/system/bin/
+sudo cp -a ./ih8sn.conf  $MOUNT_DIR/system/etc/
+sudo cp -a ./ih8sn/ih8sn.rc $MOUNT_DIR/system/etc/init/
+
 echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
+
+
 
 ############
 
 rm -rf ./opengapps/
 
 sync
-sudo umount $MOUNT_DIR
+sudo umount $IMG
 
 
 
