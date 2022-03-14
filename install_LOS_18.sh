@@ -34,6 +34,3 @@ cd waydroid_script
 
 sudo systemctl start waydroid-container.service
 
-sudo python3 waydroid_extras.py -h
-
-sudo python3 waydroid_extras.py -i
