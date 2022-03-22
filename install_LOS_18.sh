@@ -26,11 +26,12 @@ sudo cp gbinder.conf  /etc/gbinder.conf
 sudo cp waydroid_lineage_18/vendor.img $IMG_VENDOR
 sudo cp waydroid_lineage_18/system.img $IMG
 
+echo "waydroid.active_apps=Waydroid" | sudo tee -a  /var/lib/waydroid/waydroid_base.prop
+sed -i 's/^waydroid.system_ota=.*/waydroid.system_ota=/' /var/lib/waydroid/waydroid_base.prop
+sed -i 's/^waydroid.vendor_ota=.*/waydroid.vendor_ota=/' /var/lib/waydroid/waydroid_base.prop
 
-git clone https://github.com/casualsnek/waydroid_script
-cd waydroid_script
-#sudo python3 -m pip install -r requirements.txt
-#sudo python3 waydroid_extras.py [-i/-g/-n/-h]
+sed 's/^# waydroid.system_ota=.*/waydroid.system_ota=' /var/lib/waydroid/waydroid_base.prop
+
 
 sudo systemctl start waydroid-container.service
 
