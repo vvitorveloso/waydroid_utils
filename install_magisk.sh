@@ -1,7 +1,11 @@
 #!/bin/bash
 
-
+VERSION=v24.1
 rand=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 4)
+rand1=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
+rand2=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
+rand3=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
+rand4=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
 
 #refs:
 #https://github.com/casualsnek/waydroid_script/issues/12
@@ -18,24 +22,17 @@ MOUNT_DIR=/tmp/waydroid_system
 
 sudo umount $IMG
 sudo umount $IMG_VENDOR
+#TRIPLE CHECK
+sudo umount $IMG
+sudo umount $IMG_VENDOR
+sudo umount $IMG
+sudo umount $IMG_VENDOR
 
+####test
+#sudo rm -rf ~/.local/share/waydroid/data/adb/magisk
+#sudo rm ~/.local/share/waydroid/data/adb/magisk.db
+#
 
-###############RESIZE#######################
-#SIZE=$(echo $(du -h -d0 XXXXXXXXXXX | cut -d'M' -f1)M) 
-
-#sudo qemu-img resize $IMG +$SIZE
-#sudo e2fsck -f $IMG
-#sudo resize2fs $IMG
-
-
-##############################******************
-
-mkdir $MOUNT_DIR
-sudo mount $IMG $MOUNT_DIR
-#mkdir /tmp/waydroid_vendor/
-sudo mv $MOUNT_DIR/system/vendor $MOUNT_DIR/system/vendor.bkp
-sudo mkdir $MOUNT_DIR/system/vendor
-sudo mount $IMG_VENDOR $MOUNT_DIR/system/vendor
 
 
 
@@ -45,18 +42,48 @@ sudo mount $IMG_VENDOR $MOUNT_DIR/system/vendor
 
 #!/bin/bash
 
-IMG=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/system.img
-IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/vendor.img
-MOUNT_DIR=/tmp/waydroid_system
+#IMG=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/system.img
+#IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/vendor.img
+#MOUNT_DIR=/tmp/waydroid_system
 
-wget https://github.com/topjohnwu/Magisk/releases/download/v24.1/Magisk-v24.1.apk
-mv Magisk-v24.1.apk magisk.zip
+wget https://github.com/topjohnwu/Magisk/releases/download/$VERSION/Magisk-$VERSION.apk
+mv Magisk-$VERSION.apk magisk.zip
 
 sudo rm -rf magisk
 mkdir magisk
 
 sudo rm -rf /tmp/magisk_tmp
 unzip magisk -d /tmp/magisk_tmp
+
+###############RESIZE#######################
+
+sudo umount $IMG $MOUNT_DIR
+
+SIZE=$(echo $(du -h -d0 /tmp/magisk_tmp | cut -d'M' -f1 )M)
+
+sudo qemu-img resize $IMG +$SIZE
+sudo e2fsck -f $IMG
+sudo resize2fs $IMG
+
+SIZE=$(echo $(du -h -d0 magisk.zip | cut -d'M' -f1 )M)
+
+sudo qemu-img resize $IMG +$SIZE
+sudo e2fsck -f $IMG
+sudo resize2fs $IMG
+
+
+
+##############################******************
+
+
+mkdir $MOUNT_DIR
+sudo mount $IMG $MOUNT_DIR
+#mkdir /tmp/waydroid_vendor/
+sudo mv $MOUNT_DIR/system/vendor $MOUNT_DIR/system/vendor.bkp
+sudo mkdir $MOUNT_DIR/system/vendor
+sudo mount $IMG_VENDOR $MOUNT_DIR/system/vendor
+
+
 
 sudo umount /var/lib/waydroid/data
 sudo mount -o bind ~/.local/share/waydroid/data /var/lib/waydroid/data
@@ -70,28 +97,39 @@ cp /tmp/magisk_tmp/lib/x86_64/libbusybox.so magisk/busybox
 cp /tmp/magisk_tmp/lib/x86_64/libmagiskinit.so magiskpolicy
 cp /tmp/magisk_tmp/assets/boot_patch.sh magisk/boot_patch.sh
 cp /tmp/magisk_tmp/assets/util_functions.sh magisk/util_functions.sh
+cp -r /tmp/magisk_tmp/assets/chromeos magisk/
+
+
+rm -rf magiskxz
+mkdir magiskxz
+cp /tmp/magisk_tmp/lib/x86_64/libmagisk64.so magiskxz/magisk64
+cp /tmp/magisk_tmp/lib/x86/libmagisk32.so magiskxz/magisk32 
+xz magiskxz/magisk32 
+xz magiskxz/magisk64 
 
 #sudo mkdir ~/.local/share/waydroid/data/adb/module
 sudo mkdir $MOUNT_DIR/system/sbin
 sudo chcon --reference $MOUNT_DIR/system/init.environ.rc $MOUNT_DIR/system/sbin
 sudo chown root:root $MOUNT_DIR/system/sbin
 sudo chmod 0700 $MOUNT_DIR/system/sbin
-#sudo cp magisk/* $MOUNT_DIR/system/sbin/
+#######################sudo cp magisk/* $MOUNT_DIR/sbin/
 
 
-sudo rm -rf ~/.local/share/waydroid/data/adb/magisk
+
+
 
 
 ############DEGUB ONLY
-sudo rm ~/.local/share/waydroid/data/adb/magisk.db
-cp ~/.local/share/waydroid/data/adb/magisk/magiskinit $MOUNT_DIR/init
+#sudo rm -rf ~/.local/share/waydroid/data/adb/magisk
+#sudo rm ~/.local/share/waydroid/data/adb/magisk.db
+sudo cp ~/.local/share/waydroid/data/adb/magisk/magiskinit $MOUNT_DIR/init
 #################
-
+sudo cp magiskxz/* $MOUNT_DIR/sbin/
 
 
 sudo mkdir -p ~/.local/share/waydroid/data/adb/magisk
 sudo chmod -R 700 ~/.local/share/waydroid/data/adb
-sudo cp magisk/* ~/.local/share/waydroid/data/adb/magisk/
+sudo cp -r magisk/* ~/.local/share/waydroid/data/adb/magisk/
 sudo find ~/.local/share/waydroid/data/adb/magisk -type f -exec chmod 0755 {} \;
 sudo cp magisk.zip ~/.local/share/waydroid/data/adb/magisk/magisk.apk
 sudo tee -a $MOUNT_DIR/system/sbin/loadpolicy.sh <<EOF
@@ -118,7 +156,25 @@ chmod +x ./magiskpolicy
 echo '/dev/$rand(/.*)?    u:object_r:magisk_file:s0' | sudo tee -a $MOUNT_DIR/system/vendor/etc/selinux/vendor_file_contexts
 echo '/data/adb/magisk(/.*)?   u:object_r:magisk_file:s0' | sudo tee -a $MOUNT_DIR/system/vendor/etc/selinux/vendor_file_contexts
 #sudo ./magiskpolicy --load $MOUNT_DIR/system/vendor/etc/selinux/precompiled_sepolicy --save $MOUNT_DIR/system/vendor/etc/selinux/precompiled_sepolicy --magisk "allow * magisk_file lnk_file *"
-sudo tee -a $MOUNT_DIR/system/etc/init/hw/init.rc <<EOF
+
+#sudo tee -a $MOUNT_DIR/system/etc/init/hw/init.rc <<EOF
+#A10?
+
+#sudo rm -f /tmp/init.rc
+
+#sudo cp ~/.local/share/waydroid/data/adb/init.rc /tmp/init.rc
+sudo bash -c 'if [ -f "/var/lib/waydroid/data/adb/init.rc" ]; then
+   echo "Backup found"
+else
+   sudo cp /$MOUNT_DIR/init.rc ~/.local/share/waydroid/data/adb/init.rc 
+fi'
+
+
+
+
+sudo cp ~/.local/share/waydroid/data/adb/init.rc /$MOUNT_DIR/init.rc
+
+sudo tee -a $MOUNT_DIR/init.rc <<EOF
 on post-fs-data
     start logd
     start adbd
@@ -131,6 +187,7 @@ on post-fs-data
     symlink ./magisk64 /dev/$rand/magisk
     symlink ./magisk64 /dev/$rand/su
     symlink ./magisk64 /dev/$rand/resetprop
+    symlink ./magisk64 /dev/$rand/supolicy
     chmod 0755 /dev/$rand/magisk32
     chmod 0755 /dev/$rand/magiskinit
     symlink ./magiskinit /dev/$rand/magiskpolicy
@@ -138,34 +195,37 @@ on post-fs-data
     mkdir /dev/$rand/.magisk/mirror 700
     mkdir /dev/$rand/.magisk/mirror/data 700
     mkdir /dev/$rand/.magisk/block 700
+    mkdir /dev/$rand/.magisk/zygisk
     mount none /data /dev/$rand/.magisk/mirror/data bind rec  
     rm /dev/.magisk_unblock
-    start IhhslLhHYfse
-    start FAhW7H9G5sf
+    start $rand1
+    start $rand2
     wait /dev/.magisk_unblock 40
     rm /dev/.magisk_unblock
-service IhhslLhHYfse /system/bin/sh /sbin/loadpolicy.sh
+service $rand1 /system/bin/sh /sbin/loadpolicy.sh
     user root
     seclabel u:r:magisk:s0
     oneshot
-service FAhW7H9G5sf /dev/$rand/magisk --post-fs-data
+service $rand2 /dev/$rand/magisk --post-fs-data
     user root
     seclabel u:r:magisk:s0
     oneshot
-service HLiFsR1HtIXVN6 /dev/$rand/magisk --service
+service $rand3 /dev/$rand/magisk --service
     class late_start
     user root
     seclabel u:r:magisk:s0
     oneshot
 on property:sys.boot_completed=1
-    start YqCTLTppv3ML
-service YqCTLTppv3ML /dev/$rand/magisk --boot-complete
+    start $rand4
+service $rand4 /dev/$rand/magisk --boot-complete
     user root
     seclabel u:r:magisk:s0
     oneshot
 EOF
 
 
+sudo umount $IMG_VENDOR
+sudo umount $IMG_VENDOR
 sudo umount $IMG_VENDOR
 sudo rm -rf $MOUNT_DIR/system/vendor
 sudo mv $MOUNT_DIR/system/vendor.bkp $MOUNT_DIR/system/vendor
