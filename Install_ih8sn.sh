@@ -12,13 +12,22 @@ TMP_DIR=/tmp/opengapps/system/
 
 sudo umount $IMG
 mkdir $MOUNT_DIR
-sudo mount $IMG $MOUNT_DIR
+
 
 rm -rf ih8sn-x86_64.zip 
 wget https://github.com/luk1337/ih8sn/releases/download/latest/ih8sn-x86_64.zip
 
 rm -rf ih8sn 
 unzip -d ih8sn ih8sn-x86_64.zip 
+
+
+SIZE=$(echo $(du -h -d0 ih8sn | cut -d'M' -f1 | cut -d',' -f1)M)
+
+sudo qemu-img resize $IMG +$SIZE
+sudo e2fsck -f $IMG
+sudo resize2fs $IMG
+
+sudo mount $IMG $MOUNT_DIR
 
 sudo rm -rf $MOUNT_DIR/system/bin/ih8sn
 sudo cp -a ./ih8sn/60-ih8sn.sh $MOUNT_DIR/system/addon.d/

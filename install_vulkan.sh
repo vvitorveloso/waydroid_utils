@@ -8,11 +8,12 @@ sudo systemctl stop waydroid-container.service
 IMG=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/system.img
 IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/vendor.img
 MOUNT_DIR=/tmp/waydroid_system
+MOUNT_VENDOR_DIR=/tmp/waydroid_vendor/
 
 mkdir $MOUNT_DIR
 sudo mount $IMG $MOUNT_DIR
 mkdir /tmp/waydroid_vendor/
-sudo mount $IMG_VENDOR /tmp/waydroid_vendor/
+sudo mount $IMG_VENDOR $MOUNT_VENDOR_DIR
 
 
 for i in $(ls vulkan/vendor);do sudo cp -aR ./vulkan/vendor/$i /tmp/waydroid_vendor/;done

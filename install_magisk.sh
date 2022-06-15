@@ -7,6 +7,7 @@ rand2=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
 rand3=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
 rand4=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
 
+CLEAN=1
 #refs:
 #https://github.com/casualsnek/waydroid_script/issues/12
 #https://github.com/LSPosed/MagiskOnWSA/blob/main/.github/workflows/magisk.yml#L162
@@ -20,17 +21,15 @@ IMG=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/sy
 IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/vendor.img
 MOUNT_DIR=/tmp/waydroid_system
 
-sudo umount $IMG
-sudo umount $IMG_VENDOR
-#TRIPLE CHECK
-sudo umount $IMG
-sudo umount $IMG_VENDOR
-sudo umount $IMG
-sudo umount $IMG_VENDOR
+while [ "$(mount | grep waydroid | cut -d" " -f3)" != "" ];do
+for i in $(mount | grep waydroid | cut -d" " -f3);do sudo umount $i;done
+echo retrying
+sleep 1
+done
 
 ####test
-#sudo rm -rf ~/.local/share/waydroid/data/adb/magisk
-#sudo rm ~/.local/share/waydroid/data/adb/magisk.db
+#sudo rm -rf /var/lib/waydroid/data/adb/magisk
+#sudo rm /var/lib/waydroid/data/adb/magisk.db
 #
 
 
@@ -40,52 +39,65 @@ sudo umount $IMG_VENDOR
 ##############INSTALL#******************
 
 
-#!/bin/bash
 
-#IMG=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/system.img
-#IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -f 3)/vendor.img
-#MOUNT_DIR=/tmp/waydroid_system
+if test -f "Magisk-$VERSION.apk" ; then
+    echo "Downloaded files founded"
+else
+    echo "Downloading Magisk $VERSION"
+    wget https://github.com/topjohnwu/Magisk/releases/download/$VERSION/Magisk-$VERSION.apk
+fi
 
-wget https://github.com/topjohnwu/Magisk/releases/download/$VERSION/Magisk-$VERSION.apk
-mv Magisk-$VERSION.apk magisk.zip
 
-sudo rm -rf magisk
+
+
+
+
+
+cp Magisk-$VERSION.apk Magisk-$VERSION.apk.zip
+
+sudo rm -rf magisk 2>/dev/null
 mkdir magisk
 
-sudo rm -rf /tmp/magisk_tmp
-unzip magisk -d /tmp/magisk_tmp
+sudo rm -rf /tmp/magisk_tmp 2>/dev/null
+echo Unziping Magisk
+unzip -q  Magisk-$VERSION.apk.zip -d /tmp/magisk_tmp 
 
 ###############RESIZE#######################
 
-sudo umount $IMG $MOUNT_DIR
 
-SIZE=$(echo $(du -h -d0 /tmp/magisk_tmp | cut -d'M' -f1 )M)
 
+#SIZE=$(echo $(du -h -d0 /tmp/magisk_tmp | cut -d'M' -f1 )M)
+
+#sudo qemu-img resize $IMG +$SIZE
+#sudo e2fsck -f $IMG
+#sudo resize2fs $IMG
+
+#SIZE=$(echo $(du -h -d0 Magisk-$VERSION.apk.zip | cut -d'M' -f1 )M)
+#For now fixed, until i check this
+SIZE=30M
 sudo qemu-img resize $IMG +$SIZE
 sudo e2fsck -f $IMG
 sudo resize2fs $IMG
 
-SIZE=$(echo $(du -h -d0 magisk.zip | cut -d'M' -f1 )M)
-
-sudo qemu-img resize $IMG +$SIZE
-sudo e2fsck -f $IMG
-sudo resize2fs $IMG
-
-
+#SIZE=$(echo $(du -h -d0 Magisk-$VERSION.apk.zip | cut -d'M' -f1 )M)
+#For now fixed, until i check this
+SIZE=10M
+sudo qemu-img resize IMG_VENDOR +$SIZE
+sudo e2fsck -f IMG_VENDOR
+sudo resize2fs IMG_VENDOR
 
 ##############################******************
 
 
-mkdir $MOUNT_DIR
+mkdir $MOUNT_DIR 2>/dev/null 
 sudo mount $IMG $MOUNT_DIR
 #mkdir /tmp/waydroid_vendor/
-sudo mv $MOUNT_DIR/system/vendor $MOUNT_DIR/system/vendor.bkp
-sudo mkdir $MOUNT_DIR/system/vendor
+sudo rm -rf $MOUNT_DIR/system/vendor 
+sudo mkdir $MOUNT_DIR/system/vendor 
 sudo mount $IMG_VENDOR $MOUNT_DIR/system/vendor
 
 
 
-sudo umount /var/lib/waydroid/data
 sudo mount -o bind ~/.local/share/waydroid/data /var/lib/waydroid/data
 
 cp /tmp/magisk_tmp/lib/x86_64/libmagisk64.so magisk/magisk64
@@ -107,8 +119,8 @@ cp /tmp/magisk_tmp/lib/x86/libmagisk32.so magiskxz/magisk32
 xz magiskxz/magisk32 
 xz magiskxz/magisk64 
 
-#sudo mkdir ~/.local/share/waydroid/data/adb/module
-sudo mkdir $MOUNT_DIR/system/sbin
+#sudo mkdir /var/lib/waydroid/data/adb/module
+sudo mkdir $MOUNT_DIR/system/sbin 2>/dev/null 
 sudo chcon --reference $MOUNT_DIR/system/init.environ.rc $MOUNT_DIR/system/sbin
 sudo chown root:root $MOUNT_DIR/system/sbin
 sudo chmod 0700 $MOUNT_DIR/system/sbin
@@ -120,18 +132,31 @@ sudo chmod 0700 $MOUNT_DIR/system/sbin
 
 
 ############DEGUB ONLY
-#sudo rm -rf ~/.local/share/waydroid/data/adb/magisk
-#sudo rm ~/.local/share/waydroid/data/adb/magisk.db
-sudo cp ~/.local/share/waydroid/data/adb/magisk/magiskinit $MOUNT_DIR/init
+#sudo rm -rf /var/lib/waydroid/data/adb/magisk
+#sudo rm /var/lib/waydroid/data/adb/magisk.db
 #################
+
+
+############# Minimal to Magisk
+#sudo cp /var/lib/waydroid/data/adb/magisk/magiskinit $MOUNT_DIR/system/bin/init
+#sudo ln -s /init $MOUNT_DIR/system/bin/init
+#sudo cp /var/lib/waydroid/data/adb/magisk/magiskinit $MOUNT_DIR/init
+#sudo rm $MOUNT_DIR/init
 sudo cp magiskxz/* $MOUNT_DIR/sbin/
+###########
 
-
-sudo mkdir -p ~/.local/share/waydroid/data/adb/magisk
-sudo chmod -R 700 ~/.local/share/waydroid/data/adb
-sudo cp -r magisk/* ~/.local/share/waydroid/data/adb/magisk/
-sudo find ~/.local/share/waydroid/data/adb/magisk -type f -exec chmod 0755 {} \;
-sudo cp magisk.zip ~/.local/share/waydroid/data/adb/magisk/magisk.apk
+sudo mkdir -p /var/lib/waydroid/data/adb/magisk
+sudo chmod -R 700 /var/lib/waydroid/data/adb
+sudo cp -r magisk/* /var/lib/waydroid/data/adb/magisk/
+sudo find /var/lib/waydroid/data/adb/magisk -type f -exec chmod 0755 {} \;
+sudo cp Magisk-$VERSION.apk.zip /var/lib/waydroid/data/adb/magisk/magisk.apk
+#####################
+########
+###
+## MUST MAKE BACKUP
+##################
+VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+sudo rm $MOUNT_DIR/system/sbin/loadpolicy.sh
 sudo tee -a $MOUNT_DIR/system/sbin/loadpolicy.sh <<EOF
 #!/system/bin/sh
 restorecon -R /data/adb/magisk
@@ -160,21 +185,34 @@ echo '/data/adb/magisk(/.*)?   u:object_r:magisk_file:s0' | sudo tee -a $MOUNT_D
 #sudo tee -a $MOUNT_DIR/system/etc/init/hw/init.rc <<EOF
 #A10?
 
-#sudo rm -f /tmp/init.rc
 
-#sudo cp ~/.local/share/waydroid/data/adb/init.rc /tmp/init.rc
-sudo bash -c 'if [ -f "/var/lib/waydroid/data/adb/init.rc" ]; then
-   echo "Backup found"
+
+#sudo cp /var/lib/waydroid/data/adb/init.rc /tmp/init.rc
+
+
+if sudo test -f "$MOUNT_DIR/system/etc/init/hw/init.rc" ; then
+    echo "A11"
+    INITX="$MOUNT_DIR/system/etc/init/hw/init.rc"
 else
-   sudo cp /$MOUNT_DIR/init.rc ~/.local/share/waydroid/data/adb/init.rc 
-fi'
+    echo "A10"
+    INITX="$MOUNT_DIR/init.rc"
+fi
 
 
+BKPINIT=/var/lib/waydroid/data/adb/init.rc
 
 
-sudo cp ~/.local/share/waydroid/data/adb/init.rc /$MOUNT_DIR/init.rc
+if sudo test -f "$BKPINIT" ; then
+    echo "Backup found from $INITX"
+else
+   echo "making backup from $INITX"
+   sudo cp $INITX $BKPINIT
+fi
 
-sudo tee -a $MOUNT_DIR/init.rc <<EOF
+echo sudo cp $BKPINIT $INITX
+sudo cp $BKPINIT $INITX
+
+sudo tee -a $INITX <<EOF
 on post-fs-data
     start logd
     start adbd
@@ -202,62 +240,65 @@ on post-fs-data
     start $rand2
     wait /dev/.magisk_unblock 40
     rm /dev/.magisk_unblock
+
 service $rand1 /system/bin/sh /sbin/loadpolicy.sh
     user root
     seclabel u:r:magisk:s0
     oneshot
+
 service $rand2 /dev/$rand/magisk --post-fs-data
     user root
     seclabel u:r:magisk:s0
     oneshot
+
+
 service $rand3 /dev/$rand/magisk --service
     class late_start
     user root
     seclabel u:r:magisk:s0
     oneshot
+
 on property:sys.boot_completed=1
     start $rand4
+
 service $rand4 /dev/$rand/magisk --boot-complete
     user root
     seclabel u:r:magisk:s0
     oneshot
+
 EOF
 
+#################
+#echo checking
+#echo $INITX
+#sudo cat $INITX
+#################
 
-sudo umount $IMG_VENDOR
-sudo umount $IMG_VENDOR
-sudo umount $IMG_VENDOR
-sudo rm -rf $MOUNT_DIR/system/vendor
-sudo mv $MOUNT_DIR/system/vendor.bkp $MOUNT_DIR/system/vendor
-sudo umount /var/lib/waydroid/data
-sudo umount $MOUNT_DIR
-sudo umount $IMG_VENDOR
-sudo umount $IMG
+sudo umount $IMG_VENDOR 2>/dev/null
+sudo umount $IMG_VENDOR 2>/dev/null
+sudo umount $IMG_VENDOR 2>/dev/null
+sudo rm -rf $MOUNT_DIR/system/vendor 
+sudo ln -s /vendor $MOUNT_DIR/system/vendor
 
+while [ "$(mount | grep waydroid | cut -d" " -f3)" != "" ];do
+for i in $(mount | grep waydroid | cut -d" " -f3);do sudo umount $i;done
+echo retrying
+sleep 1
+done
 
-sudo umount /var/lib/waydroid/rootfs/vendor/waydroid.prop
-sudo umount /var/lib/waydroid/rootfs/vendor
-sudo umount /var/lib/waydroid/rootfs
-sudo umount $IMG
-sudo umount $IMG_VENDOR
-sudo umount /var/lib/waydroid/data
+####
+#CLEANING UP
+if [ $CLEAN == 1 ];then
+sudo rm -rf magisk
+sudo rm -rf $MOUNT_DIR
+sudo rm -rf magiskxz
+sudo rm -rf /tmp/magisk_tmp/
+rm Magisk-$VERSION.apk.zip
+fi
 
-sudo umount /var/lib/waydroid/rootfs/vendor/waydroid.prop
-sudo umount /var/lib/waydroid/rootfs/vendor
-sudo umount /var/lib/waydroid/rootfs
-sudo umount $IMG
-sudo umount $IMG_VENDOR
-sudo umount /var/lib/waydroid/data
-
-sudo umount /var/lib/waydroid/rootfs/vendor/waydroid.prop
-sudo umount /var/lib/waydroid/rootfs/vendor
-sudo umount /var/lib/waydroid/rootfs
-sudo umount $IMG
-sudo umount $IMG_VENDOR
-sudo umount /var/lib/waydroid/data
-
+###########
 #Dont know why, but it was needed one time
 sudo /usr/lib/waydroid/data/scripts/waydroid-net.sh  stop
 #
-
+sudo systemctl stop waydroid-container.service
 sudo systemctl start waydroid-container.service
