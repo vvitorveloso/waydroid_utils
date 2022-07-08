@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=v25.1
+VERSION=v24.1
 rand=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 4)
 rand1=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
 rand2=$(cat /dev/urandom | tr -dc A-Za-z0-9|head -c 12)
