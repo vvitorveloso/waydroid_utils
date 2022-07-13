@@ -13,10 +13,15 @@ IMG_VENDOR=$(cat /var/lib/waydroid/waydroid.cfg | grep images_path | cut -d' ' -
 MOUNT_DIR=/tmp/waydroid_system
 TMP_DIR=/tmp/opengapps/system/
 
-while [[ $(echo $(mount | grep waydroid)) != "" ]] ;do
-for i in $(mount | grep waydroid | cut -d " " -f1) ;do 
-sudo umount $i 
-done
+
+ARCH=$(cat /var/lib/waydroid/lxc/waydroid/config | grep lxc.arch| cut -d " " -f 3)
+VARIANT="pico"
+ANDROID_VERSION="10.0"
+
+while [ "$(mount | grep waydroid | cut -d" " -f3)" != "" ];do
+for i in $(mount | grep waydroid | cut -d" " -f3);do sudo umount $i;done
+echo retrying
+sleep 1
 done
 
 mkdir $MOUNT_DIR
@@ -26,7 +31,7 @@ mkdir $MOUNT_DIR
 #HEAVLY BASED ON INSTALL PLAYSTORE ANBOX SCRIPT
 # get latest releasedate based on tag_name for latest x86_64 build
 OPENGAPPS_RELEASEDATE="$(curl -s https://api.github.com/repos/opengapps/x86_64/releases/latest | grep tag_name | grep -o "\"[0-9][0-9]*\"" | grep -o "[0-9]*")"
-OPENGAPPS_FILE="open_gapps-x86_64-10.0-pico-$OPENGAPPS_RELEASEDATE.zip"
+OPENGAPPS_FILE="open_gapps-$ARCH-$ANDROID_VERSION-$VARIANT-$OPENGAPPS_RELEASEDATE.zip"
 OPENGAPPS_URL="https://sourceforge.net/projects/opengapps/files/x86_64/$OPENGAPPS_RELEASEDATE/$OPENGAPPS_FILE"
 
 # get opengapps and install it
@@ -92,10 +97,7 @@ mkdir $TMP_DIR
 mkdir /tmp/opengapps/system/bin/
 mkdir /tmp/opengapps/system/addon.d/
 mkdir /tmp/opengapps/system/etc/init/
-sudo cp -a ./ih8sn/60-ih8sn.sh /tmp/opengapps/system/addon.d/
-sudo cp -a ./ih8sn/ih8sn /tmp/opengapps/system/bin/
-sudo cp -a ./ih8sn.conf  /tmp/opengapps/system/etc/
-sudo cp -a ./ih8sn/ih8sn.rc /tmp/opengapps/system/etc/init/
+
 
 ##################################################
 
@@ -141,8 +143,8 @@ sudo rm -rf  $MOUNT_DIR/system/priv-app/PackageInstaller
 #################
 
 sudo cp -aR $TMP_DIR $MOUNT_DIR
-
-echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
+#SPOOF
+#echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
 
 
 
@@ -151,12 +153,13 @@ echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.00
 
 
 sync
-sudo umount $IMG
+
+while [ "$(mount | grep waydroid | cut -d" " -f3)" != "" ];do
+for i in $(mount | grep waydroid | cut -d" " -f3);do sudo umount $i;done
+echo retrying
+sleep 1
+done
 
 
 
 sudo systemctl start waydroid-container
-
-git clone https://github.com/casualsnek/waydroid_script
-echo now run "$"sudo waydroid_script/waydroid_extras.py -n to libndk
-
