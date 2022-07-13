@@ -1,7 +1,6 @@
 #sudo pacman -S qemu
 ###DEBUG
-rm -rf ./opengapps/
-#sudo rm -rf /tmp/opengapps
+sudo rm -rf /tmp/opengapps
 ###
 
 
