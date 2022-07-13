@@ -155,7 +155,7 @@ sudo cp Magisk-$VERSION.apk.zip /var/lib/waydroid/data/adb/magisk/magisk.apk
 ###
 ## MUST MAKE BACKUP
 ##################
-VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+#VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 sudo rm $MOUNT_DIR/system/sbin/loadpolicy.sh
 sudo tee -a $MOUNT_DIR/system/sbin/loadpolicy.sh <<EOF
 #!/system/bin/sh
