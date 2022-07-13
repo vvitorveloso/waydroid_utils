@@ -38,5 +38,5 @@ Recover the bkp
 Just call "https://github.com/casualsnek/waydroid_script"
 
 
-######## Notes: i dont know if ih8sn works or what is missing, i havent have time to test ad fix all, please tell me if you find something wrong or not working, and DO NOT USE VULKAN, ITS FOR TESTING ONLY, IT WILL BREAK YOUR SYSTEM
+######## Notes: i dont know if ih8sn works or what is missing, i havent have time to test and fix all, please tell me if you find something wrong or not working, and DO NOT USE VULKAN, ITS FOR TESTING ONLY, IT WILL BREAK YOUR SYSTEM
 
