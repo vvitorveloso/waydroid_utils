@@ -14,7 +14,13 @@ mkdir $MOUNT_DIR
 #sudo rm -rf /var/lib/waydroid/ ~/.local/share/{waydroid,applications/waydroid}
 
 
+#Uncoment if you want to remove all
+#sudo rm -rf /var/lib/waydroid/ ~/.local/share/{waydroid,applications/waydroid}
+
+
 A11_URL="https://sourceforge.net/projects/blissos-dev/files/waydroid/lineage/lineage-18.1/Lineage-OS-18.1-waydroid_x86_64-202111291420-foss-sd-hd-ex_ax86-vaapi_gles-aep.zip/download"
+#For testing
+#A11_URL="https://pipelines.actions.githubusercontent.com/E2fiYkVpqKlMoYIWIF6suaz1doSZftfZ29CCnan78Egy9qAU9r/_apis/pipelines/1/runs/43/signedartifactscontent?artifactName=WD-magisk-pico_x64&urlExpires=2022-06-08T14%3A39%3A55.0848207Z&urlSigningMethod=HMACV2&urlSignature=jc%2FYJSDpzFSl6JEEZcSFTgWCbxSQADHtgSJUZ5zJQEc%3D"
 
 if [ ! -f waydroid_lineage_18.zip ]; then
 wget $A11_URL -O waydroid_lineage_18.zip
@@ -27,7 +33,7 @@ unzip -d waydroid_lineage_18 ./waydroid_lineage_18.zip
 
 
 
-sudo cp anbox.conf  /etc/gbinder.d/anbox.conf 
+sudo rm  /etc/gbinder.d/anbox.conf 
 sudo cp gbinder.conf  /etc/gbinder.conf
 
 sudo cp waydroid_lineage_18/vendor.img $IMG_VENDOR
@@ -39,6 +45,9 @@ sudo sed -i 's/^waydroid.vendor_ota=.*/waydroid.vendor_ota=/' /var/lib/waydroid/
 
 sudo mount $IMG $MOUNT_DIR
 
+sudo sed -i -i '/setprop sys.use_memfd/s/false/true/'  /tmp/waydroid_system/system/etc/init/hw/init.rc 
+sudo umount $IMG
+#sudo umount $IMG_VENDOR
 
 
 sudo sed -i '/setprop sys.use_memfd/s/false/true/' $MOUNT_DIR/system/etc/init/hw/init.rc
