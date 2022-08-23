@@ -15,7 +15,7 @@ TMP_DIR=/tmp/opengapps/system/
 
 
 ARCH=$(cat /var/lib/waydroid/lxc/waydroid/config | grep lxc.arch| cut -d " " -f 3)
-VARIANT="full"
+VARIANT="pico"
 ANDROID_VERSION="10.0"
 
 while [ "$(mount | grep waydroid | cut -d" " -f3)" != "" ];do
