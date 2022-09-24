@@ -167,11 +167,15 @@ sudo chown 0:0 -R /tmp/opengapps/
 
 sudo cp -aR $TMP_DIR $MOUNT_DIR
 #SPOOF
-#echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
+echo ro.build.fingerprint="OnePlus/OnePlus7Pro_EEA/OnePlus7Pro:10/QKQ1.190716.003/1910071200:user/release-keys" | sudo tee -a /var/lib/waydroid/waydroid_base.prop
 
 #wont start
 sudo rm -rf  $MOUNT_DIR/system/priv-app/WellbeingPrebuilt
 
+
+if [[ "$VARIANT"  == "pico" ]] ; then
+sudo rm -rf  $MOUNT_DIR/system/priv-app/SetupWizard
+fi
 
 ############
 
